@@ -1099,25 +1099,29 @@
   function showTeacherPanel() { hideAll(); teacherPanel.classList.remove('hidden'); renderResults(); updateFailedNotification(); }
   
   // Показ видео с проверкой доступа
-  async function showVideoScreen(id) {
+async function showVideoScreen(id) {
     if (currentUser && currentUser.role === 'student') {
-      const results = await loadResults();
-      const passed = results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === id && r.passed);
-      if (!passed) {
-        alert('Видео доступно только после успешного прохождения теста.');
-        return;
-      }
+        const results = await loadResults();
+        const passed = results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === id && r.passed);
+        if (!passed) {
+            alert('Видео доступно только после успешного прохождения теста.');
+            return;
+        }
     }
     hideAll(); 
     videoScreen.classList.remove('hidden');
     const t = TESTS.find(t => t.id === id);
     if (t) {
-      videoTestTitle.textContent = t.title;
-      pendingTestId = id;
-      const iframe = document.getElementById('rutube-iframe');
-      iframe.src = 'https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5';
+        videoTestTitle.textContent = t.title;
+        pendingTestId = id;
+        const iframe = document.getElementById('rutube-iframe');
+        // Принудительно перезагружаем плеер с параметром, чтобы избежать бесконечной загрузки
+        iframe.src = '';
+        setTimeout(() => {
+            iframe.src = 'https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5?skinColor=00cbff';
+        }, 100);
     }
-  }
+}
 
   function showTestScreen(test) { 
     const iframe = document.getElementById('rutube-iframe');
