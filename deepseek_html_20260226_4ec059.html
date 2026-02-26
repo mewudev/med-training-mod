@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль интерактивного обучения</title>
+    <!-- Подключаем Firebase SDK (compat‑версия, простая в использовании) -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <style>
+        /* Все стили без изменений — они уже были в предыдущей версии */
+        * { box-sizing: border-box; font-family: 'Helvetica', 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        body {
+            background: url('https://rezkalaser.ru/wp-content/uploads/2022/10/laser_1419851.jpgsize1280x855quality96typealbum') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 0;
+        }
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            width: 100%;
+            background: #D3D3D3;
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 30px 60px -15px rgba(0,40,100,0.4), inset 0 0 0 1px rgba(255,255,255,0.8);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #50a391, #3f8a7a);
+            padding: 12px 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.1"><path d="M20,20 L30,20 L30,30 L20,30 Z" fill="white"/><circle cx="60" cy="60" r="5" fill="white"/><path d="M70,70 L80,70 L80,80 L70,80 Z" fill="white"/><path d="M40,40 L50,40 L50,50 L40,50 Z" fill="white"/><circle cx="20" cy="80" r="4" fill="white"/><path d="M80,20 L90,20 L90,30 L80,30 Z" fill="white"/></svg>');
+            background-repeat: repeat;
+            background-size: 60px 60px;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .logo-area {
+            width: 25%;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
+        }
+        .logo-area a {
+            display: inline-block;
+            line-height: 0;
+        }
+        .logo-area img {
+            height: 45px;
+            width: auto;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        .logo-area img:hover { transform: scale(1.05); }
+        .college-name {
+            font-size: 1rem;
+            font-weight: 500;
+            max-width: 220px;
+            line-height: 1.3;
+            color: white;
+        }
+        .header-center {
+            width: 50%;
+            padding-left: 22px;
+            position: relative;
+            z-index: 2;
+        }
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            text-shadow: 2px 2px 3px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .header-quote {
+            font-style: italic;
+            font-size: 0.95rem;
+            margin-top: 5px;
+            opacity: 0.9;
+            color: white;
+        }
+        .header-right {
+            width: 25%;
+        }
+
+        .main {
+            display: flex;
+            gap: 20px;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        /* Левая боковая панель */
+        .left-sidebar {
+            flex: 1;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            padding: 22px;
+            box-shadow: 0 12px 25px -8px rgba(0,50,100,0.2);
+            border: 1px solid #cde1ff;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .left-sidebar:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px -10px rgba(0,50,100,0.4);
+        }
+        .teacher-photo {
+            max-width: 220px;
+            width: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin: 0 auto 20px;
+            display: block;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .teacher-photo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .teacher-info-item {
+            margin: 12px 0;
+            font-size: 0.95rem;
+            color: #333333;
+        }
+        .teacher-info-item strong {
+            color: #333333;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+        .teacher-info-item p {
+            margin: 4px 0;
+            color: #333333;
+        }
+
+        /* Центральная колонка */
+        .center-content {
+            flex: 2;
+            background: transparent;
+        }
+
+        /* Правая боковая панель (галерея) */
+        .right-sidebar {
+            flex: 1;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            padding: 22px;
+            box-shadow: 0 12px 25px -8px rgba(0,50,100,0.2);
+            border: 1px solid #cde1ff;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .right-sidebar:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px -10px rgba(0,50,100,0.4);
+        }
+        .right-sidebar h3 {
+            color: #333333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-left: 4px solid #50a391;
+            padding-left: 12px;
+        }
+        .gallery-container {
+            position: relative;
+            width: 100%;
+        }
+        .gallery-image {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .gallery-image:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+        .gallery-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 12px;
+        }
+        .gallery-nav button {
+            background: transparent;
+            border: none;
+            color: #50a391;
+            font-size: 1.5rem;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            transition: transform 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gallery-nav button:hover {
+            transform: scale(1.3);
+            color: #3f8a7a;
+        }
+
+        /* Статический контент центральной колонки */
+        .about-section, .publications-section {
+            background: rgba(255,255,255,0.9);
+            border-radius: 28px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 25px -8px rgba(0,50,100,0.2);
+            border: 1px solid #cde1ff;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .about-section:hover, .publications-section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 35px -10px rgba(0,50,100,0.3);
+        }
+        .about-section h2, .publications-section h2 {
+            color: #333333;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            border-left: 6px solid #50a391;
+            padding-left: 16px;
+        }
+        .about-section p {
+            margin: 8px 0;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            color: #333333;
+        }
+        .about-section strong {
+            color: #50a391;
+        }
+        .publications-placeholder {
+            color: #2c5778;
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+
+        /* Все стили для модуля тестирования */
+        button {
+            background: linear-gradient(135deg, #50a391, #3f8a7a);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 15px rgba(80,163,145,0.3), 0 0 0 1px rgba(255,255,255,0.3) inset;
+            letter-spacing: 0.3px;
+            transform: scale(1);
+        }
+        button:hover {
+            background: linear-gradient(135deg, #3f8a7a, #2f6b5e);
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 25px rgba(63,138,122,0.5), 0 0 0 1px rgba(255,255,255,0.4) inset;
+        }
+        button:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 4px 8px rgba(63,138,122,0.4);
+        }
+        button:disabled {
+            background: #b0c8e0;
+            color: #3a4f66;
+            pointer-events: none;
+            opacity: 0.6;
+            box-shadow: none;
+            transform: none;
+        }
+        .secondary-btn {
+            background: linear-gradient(135deg, #50a391, #3f8a7a);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 15px rgba(80,163,145,0.3), 0 0 0 1px rgba(255,255,255,0.3) inset;
+        }
+        .secondary-btn:hover {
+            background: linear-gradient(135deg, #3f8a7a, #2f6b5e);
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 25px rgba(63,138,122,0.5), 0 0 0 1px rgba(255,255,255,0.4) inset;
+        }
+        .role-selector { display: flex; gap: 12px; margin: 20px 0; }
+        .role-btn {
+            background: #e1ecf9;
+            color: #333333;
+            flex: 1;
+            border-radius: 40px;
+            border: 2px solid transparent;
+            font-weight: 600;
+            padding: 12px 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+        .role-btn.active {
+            background: linear-gradient(135deg, #50a391, #3f8a7a);
+            color: white;
+            border-color: #fff;
+            box-shadow: 0 8px 15px rgba(80,163,145,0.3);
+        }
+        .input-group { margin-bottom: 20px; }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333333;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            background: #f0f8ff;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05), 0 0 0 2px #c8e2ff;
+            transition: all 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 0 3px #50a391;
+        }
+        .input-group input:invalid:not(:placeholder-shown) { box-shadow: 0 0 0 2px #ff6b6b; }
+        .test-item {
+            background: white;
+            border-radius: 28px;
+            padding: 22px;
+            margin-bottom: 20px;
+            border: 1px solid #cde1ff;
+            box-shadow: 0 12px 25px -8px rgba(0,50,100,0.2);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(2px);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .test-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 35px -10px rgba(0,80,150,0.3);
+        }
+        .test-info strong { font-size: 1.3rem; color: #333333; display: block; margin-bottom: 6px; }
+        .test-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .timer {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #b22234;
+            background: #ffefef;
+            padding: 8px 22px;
+            border-radius: 50px;
+            box-shadow: 0 0 0 2px #ffb3b3;
+            border: 1px solid white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .question {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 22px;
+            border-left: 8px solid #50a391;
+            box-shadow: 0 12px 20px -8px rgba(80,163,145,0.25);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .question:hover {
+            transform: translateX(8px);
+            box-shadow: 0 18px 30px -8px rgba(80,163,145,0.35);
+        }
+        .question-text {
+            font-weight: 700;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            color: #333333;
+        }
+        .hint {
+            font-size: 0.85rem;
+            color: #50a391;
+            font-style: italic;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #f5faff;
+            padding: 12px 22px;
+            border-radius: 50px;
+            cursor: pointer;
+            border: 1px solid #c9dfff;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        .options label:hover {
+            background: #e3f0ff;
+            border-color: #50a391;
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 6px 12px rgba(80,163,145,0.15);
+        }
+        input[type="radio"], input[type="checkbox"] { width: 20px; height: 20px; accent-color: #50a391; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: #50a391;
+            color: white;
+            padding: 14px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid #3f8a7a;
+            text-align: left;
+        }
+        td {
+            background: rgba(255,255,255,0.8);
+            padding: 14px 16px;
+            border: 1px solid #ccc;
+            backdrop-filter: blur(2px);
+            transition: background 0.3s;
+            font-size: 0.9rem;
+        }
+        tr:hover td { background: rgba(255,255,255,0.95); }
+        .badge {
+            display: inline-block;
+            padding: 5px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .badge.pass { background: #d9f0e1; color: #0a5e2a; border: 1px solid #8fcaa7; }
+        .badge.fail { background: #ffe2e2; color: #a12b2b; border: 1px solid #ffa3a3; }
+        .hidden { display: none !important; }
+        .video-container {
+            background: linear-gradient(145deg, #e1efff, #d0e2fc);
+            border-radius: 40px;
+            padding: 28px;
+            margin: 20px 0;
+            border: 2px solid #50a391;
+            box-shadow: 0 15px 25px -8px rgba(0,80,130,0.3);
+            text-align: center;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+        .video-container:hover {
+            box-shadow: 0 25px 35px -6px rgba(0,80,130,0.5);
+            transform: translateY(-2px);
+        }
+        .video-title {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: normal;
+            color: #333333;
+        }
+        .logout-btn, .home-btn {
+            background: linear-gradient(135deg, #50a391, #3f8a7a);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 15px rgba(80,163,145,0.3), 0 0 0 1px rgba(255,255,255,0.3) inset;
+        }
+        .logout-btn:hover, .home-btn:hover {
+            background: linear-gradient(135deg, #3f8a7a, #2f6b5e);
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 25px rgba(63,138,122,0.5), 0 0 0 1px rgba(255,255,255,0.4) inset;
+        }
+        .notification-banner {
+            background: #ffd1d1;
+            border-radius: 50px;
+            padding: 14px 22px;
+            margin: 20px 0;
+            color: #a10000;
+            font-weight: 600;
+            border: 2px solid #ff5e5e;
+            box-shadow: 0 8px 15px rgba(255,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.95rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 94, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 94, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 94, 94, 0); }
+        }
+        .detail-row {
+            background: #f0f6ff;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 12px;
+            border: 1px solid #b8d6ff;
+            font-size: 0.9rem;
+        }
+        .correct { color: #0e7b32; font-weight: 700; }
+        .incorrect { color: #b12; font-weight: 700; }
+        .section-icon {
+            font-size: 1.7rem;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .decor-line {
+            height: 2px;
+            background: linear-gradient(90deg, #50a391, #3f8a7a, transparent);
+            margin: 25px 0 18px;
+        }
+        .table-icon {
+            font-size: 1.1rem;
+            margin-right: 5px;
+        }
+        .clear-stats {
+            margin-top: 25px;
+            text-align: right;
+        }
+        .clear-stats button {
+            background: transparent;
+            color: #a00;
+            border: 1px solid #ffa3a3;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            box-shadow: none;
+            transition: all 0.3s;
+        }
+        .clear-stats button:hover {
+            background: #ffe2e2;
+            color: #a00;
+            transform: scale(1.05);
+            box-shadow: 0 5px 10px rgba(255,0,0,0.2);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #50a391, #3f8a7a);
+            transition: width 1s linear;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 1400px) {
+            .main {
+                flex-wrap: wrap;
+            }
+            .left-sidebar, .right-sidebar {
+                flex: 1 1 300px;
+            }
+            .center-content {
+                flex: 2 1 600px;
+            }
+        }
+        @media (max-width: 1200px) {
+            .main {
+                flex-direction: column;
+            }
+            .left-sidebar, .right-sidebar, .center-content {
+                width: 100%;
+                flex: auto;
+            }
+            .header {
+                flex-wrap: wrap;
+            }
+            .logo-area, .header-center, .header-right {
+                width: 100%;
+                text-align: center;
+                padding-left: 0;
+            }
+            .header-center {
+                padding-left: 0;
+            }
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-title {
+                font-size: 1.3rem;
+            }
+            .main {
+                padding: 20px;
+            }
+            button {
+                padding: 10px 20px;
+            }
+            .test-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .test-actions {
+                margin-top: 15px;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+        @media (max-width: 480px) {
+            .role-selector {
+                flex-direction: column;
+            }
+            .gallery-nav button {
+                width: 44px;
+                height: 44px;
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Стили для валидации ФИО */
+        .input-group input:invalid {
+            border: 1px solid #ff6b6b;
+        }
+        .input-group .hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Кнопка разрешения пересдачи */
+        .retake-btn {
+            background: #ffa500;
+            box-shadow: 0 4px 10px rgba(255,165,0,0.3);
+            transition: all 0.3s;
+        }
+        .retake-btn:hover {
+            background: #e69500;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 15px rgba(255,165,0,0.5);
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="header">
+        <div class="logo-area">
+            <a href="https://satkamed.ru/" target="_blank">
+                <img src="https://proverili.ru/uploads/media/15944/conversions/news-logo_lists_x2.jpg" alt="Логотип колледжа">
+            </a>
+            <span class="college-name">ГБПОУ "Саткинский медицинский колледж"</span>
+        </div>
+        <div class="header-center">
+            <div class="header-title">Профессиональный сайт преподавателя хирургии</div>
+            <div class="header-quote">«Медицина поистине самое благородное из всех искусств» (Гиппократ)</div>
+        </div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="main">
+        <!-- Левая колонка: одно фото + информация -->
+        <div class="left-sidebar">
+            <img class="teacher-photo" src="https://sun9-25.userapi.com/s/v1/ig2/ykPScCGAvydtDfc8DGYPuCyLJXYoGqqhP_wtCM1LuD3pi0tNYGr5fRgynAXGyfcFSEaNJhxRY9luQECIxZJ20F58.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0" alt="Матвеева Анна Евгеньевна">
+            <div class="teacher-info-item">
+                <strong>Профессия</strong>
+                <p>Преподаватель</p>
+            </div>
+            <div class="teacher-info-item">
+                <strong>Уровень образования</strong>
+                <p>Высшее</p>
+            </div>
+            <div class="teacher-info-item">
+                <strong>Наименование образовательной программы направления подготовки</strong>
+                <p>ОП 02. Основы патологии; МДК 02.01. Сестринское дело в хирургии</p>
+            </div>
+            <div class="teacher-info-item">
+                <strong>Регион</strong>
+                <p>Челябинская область, г. Сатка</p>
+            </div>
+            <div class="teacher-info-item">
+                <strong>Место работы</strong>
+                <p>ГБПОУ "Саткинский медицинский колледж"</p>
+            </div>
+        </div>
+
+        <!-- Центральная колонка -->
+        <div class="center-content">
+            <!-- Обновлённый блок "О себе" -->
+            <div class="about-section">
+                <h2>О себе</h2>
+                <p>В 2018 году окончила Саткинский медицинский техникум по специальности «Лечебное дело» с отличием.</p>
+                <p>В 2019 году завершила обучение в Уральском государственном университете физической культуры (УралГУФК) по направлению подготовки «Адаптивная физическая культура» с  отличием.</p>
+                <p>В 2021 году успешно окончила Российскую академию народного хозяйства и государственной службы при Президенте Российской Федерации (РАНХиГС) по магистерской программе «Государственное и муниципальное управление».</p>
+                <p>Имею профессиональный стаж педагогической деятельности, составляющий 7 лет, и высшую квалификационную категорию.</p>
+                <p>Специализированный медицинский стаж составляет 4 года, где я занимала должность фельдшера выездной бригады в ГБУЗ «Станция скорой медицинской помощи города Сатка».</p>
+                <p>Обладаю опытом подготовки участников, ставших призерами и победителями региональных этапов профессиональных конкурсов мастерства «Профессионалы» и «Юниоры».</p>
+                <p>Состою в политической партии «Единая Россия».</p>
+            </div>
+
+            <!-- Блок "Мои публикации" -->
+            <div class="publications-section">
+                <h2>Мои публикации</h2>
+                <div class="publications-placeholder">
+                    <p>Скоро здесь появятся ссылки на статьи и методические материалы.</p>
+                </div>
+            </div>
+
+            <!-- Модуль дистанционного обучения -->
+            <div id="login-screen">
+                <h2><span class="section-icon">🔐</span> Вход в систему</h2>
+                <div class="role-selector">
+                    <button id="role-student-btn" class="role-btn active">👨‍🎓 Студент</button>
+                    <button id="role-teacher-btn" class="role-btn">👩‍🏫 Преподаватель</button>
+                </div>
+                <div id="student-fields">
+                    <div class="input-group">
+                        <label>ФИО студента</label>
+                        <input type="text" id="student-name" placeholder="Введите Фамилию Имя Отчество" value="" required pattern="[А-Яа-яЁё\s\-]+" title="Введите Фамилию, Имя и Отчество (минимум два слова)">
+                        <div class="hint">Например: Иванов Иван Иванович</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Группа</label>
+                        <input type="text" id="student-group" placeholder="Введите группу" value="" required>
+                    </div>
+                </div>
+                <div id="teacher-fields" class="hidden">
+                    <div class="input-group">
+                        <label>Пароль</label>
+                        <input type="password" id="teacher-password" placeholder="Введите пароль">
+                    </div>
+                </div>
+                <button id="login-btn" style="width:100%; margin-top:10px;">🚪 Войти</button>
+            </div>
+
+            <!-- Панель студента -->
+            <div id="student-panel" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap:10px;">
+                    <h2 style="border-left: none; padding-left: 0;">👋 <span id="student-name-display"></span> (<span id="student-group-display"></span>)</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="home-btn" id="student-home">← На главную</button>
+                        <button class="logout-btn" id="student-logout">Выйти</button>
+                    </div>
+                </div>
+                <div class="decor-line"></div>
+                <div id="tests-list"></div>
+            </div>
+
+            <!-- Страница видео с Rutube (доступна только после прохождения теста) -->
+            <div id="video-screen" class="hidden">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
+                    <button class="secondary-btn" id="video-back">← К списку</button>
+                </div>
+                <div class="video-container">
+                    <div class="video-title">Наложение гипсовой лангеты</div>
+                    <div id="rutube-player-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:24px; margin-bottom:20px;">
+                        <iframe id="rutube-iframe" 
+                                src="https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5" 
+                                style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" 
+                                allow="clipboard-write; autoplay" 
+                                webkitAllowFullScreen 
+                                mozallowfullscreen 
+                                allowFullScreen></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница теста -->
+            <div id="test-screen" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><span class="section-icon">📝</span> <span id="test-title"></span></h2>
+                    <div class="timer"><span>⏳</span> <span id="timer">5:00</span></div>
+                </div>
+                <form id="test-form"></form>
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width:100%"></div>
+                </div>
+                <div style="display: flex; gap: 16px; margin-top: 28px;">
+                    <button type="button" id="submit-test" class="secondary-btn" style="flex:1;">Завершить тест</button>
+                    <button type="button" id="cancel-test" class="secondary-btn">Отмена</button>
+                </div>
+            </div>
+
+            <!-- Результат студента с разбором ошибок -->
+            <div id="result-screen" class="hidden">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <h2><span class="section-icon">📊</span> Результат теста</h2>
+                    <button class="secondary-btn" id="result-back">К списку тестов</button>
+                </div>
+                <div id="student-result-details" style="background:white; border-radius:30px; padding:30px; box-shadow:0 10px 20px rgba(0,0,0,0.05);"></div>
+                <!-- Блок с домашним заданием (видео) и уведомлением о несдаче -->
+                <div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border-radius: 20px; border: 1px solid #50a391;" id="result-homework-block">
+                    <p style="font-size: 1.1rem; margin-bottom: 15px;"><strong>Домашнее задание:</strong> посмотрите видео по теме занятия.</p>
+                    <button id="result-video-btn" class="secondary-btn">📺 Смотреть видео</button>
+                </div>
+                <div id="fail-message" class="hidden" style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 20px;">
+                    <p style="font-size: 1.1rem; color: #856404;"><strong>Вы не сдали тест.</strong> Обратитесь к преподавателю для консультации и возможности пересдачи.</p>
+                </div>
+            </div>
+
+            <!-- Панель преподавателя -->
+            <div id="teacher-panel" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap:20px;">
+                    <h2 style="border-left: none; padding-left: 0;">Результаты тестирования</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="home-btn" id="teacher-home">← На главную</button>
+                        <button class="logout-btn" id="teacher-logout">Выйти</button>
+                    </div>
+                </div>
+                <div id="teacher-notification" class="notification-banner hidden">
+                    ⚠️ Есть несданные тесты! <span id="fail-count"></span>
+                </div>
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Студент</th>
+                            <th>Группа</th>
+                            <th>Тест</th>
+                            <th>Баллы</th>
+                            <th>Результат</th>
+                            <th>Дата/время</th>
+                            <th>Детали</th>
+                            <th>Пересдача</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="clear-stats">
+                    <button id="clear-stats-btn">🗑️ Очистить статистику</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка: галерея со стрелками -->
+        <div class="right-sidebar">
+            <h3>Фотогалерея</h3>
+            <div class="gallery-container">
+                <img id="gallery-img" class="gallery-image" src="https://sun9-30.userapi.com/s/v1/ig2/BTQc5Igys2NOVYSeGMF2NFt2sprEId9P_zNAQ3X_iicdwJhjS-dAAF5tnNc84tnfN_JC3GqnZ-cLWQpueqUsmFXr.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0" alt="Фото галереи">
+                <div class="gallery-nav">
+                    <button id="prev-gallery">←</button>
+                    <button id="next-gallery">→</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  // 🔥 ВАШИ ДАННЫЕ ИЗ FIREBASE (уже вставлены)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBAuatl6hNckHnJUHabty4vWAIy6TUCCs",
+    authDomain: "mewudev.firebaseapp.com",
+    projectId: "mewudev",
+    storageBucket: "mewudev.firebasestorage.app",
+    messagingSenderId: "942745098749",
+    appId: "1:942745098749:web:b4615389bab6150227a194"
+  };
+
+  // Инициализация Firebase (используем compat‑версию)
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const TEACHER_PASSWORD = 'teacher123';
+  const TESTS = [{
+    id: 1,
+    title: 'Первая помощь при переломах',
+    timeLimit: 300,
+    passingScore: 3,
+    questions: [
+      { id: 101, text: 'Какие бывают переломы?', type: 'single', points: 1,
+        options: [
+          { id: 1, text: 'закрытые и косые', correct: false },
+          { id: 2, text: 'открытые и закрытые', correct: true },
+          { id: 3, text: 'вертикальные и сильные', correct: false }
+        ] },
+      { id: 102, text: 'Для какого перелома характерно наличие раны?', type: 'single', points: 1,
+        options: [
+          { id: 4, text: 'неполного', correct: false },
+          { id: 5, text: 'закрытого', correct: false },
+          { id: 6, text: 'открытого', correct: true }
+        ] },
+      { id: 103, text: 'Что такое иммобилизация конечности?', type: 'single', points: 1,
+        options: [
+          { id: 7, text: 'прогревание ушибленного места', correct: false },
+          { id: 8, text: 'проверка сустава на сгибаемость', correct: false },
+          { id: 9, text: 'обездвиживание', correct: true }
+        ] },
+      { id: 104, text: 'Какие суставы нужно обязательно зафиксировать?', type: 'single', points: 1,
+        options: [
+          { id: 10, text: 'суставы выше и ниже перелома', correct: true },
+          { id: 11, text: 'сустав выше перелома', correct: false },
+          { id: 12, text: 'сустав ниже перелома', correct: false }
+        ] },
+      { id: 105, text: 'Что можно использовать для иммобилизации?', type: 'single', points: 1,
+        options: [
+          { id: 13, text: 'горячую грелку', correct: false },
+          { id: 14, text: 'холодную грелку', correct: false },
+          { id: 15, text: 'шины, доски', correct: true }
+        ] }
+    ]
+  }];
+
+  // ---------- РАБОТА С FIREBASE (вместо localStorage) ----------
+  async function loadResults() {
+    try {
+      const snapshot = await db.collection('results').get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Ошибка загрузки из Firestore:', error);
+      return [];
+    }
+  }
+
+  async function saveResult(result) {
+    try {
+      // Добавляем временную метку для сортировки (можно использовать серверное время)
+      await db.collection('results').add({
+        ...result,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Ошибка сохранения в Firestore:', error);
+    }
+  }
+
+  async function deleteResult(docId) {
+    try {
+      await db.collection('results').doc(docId).delete();
+    } catch (error) {
+      console.error('Ошибка удаления из Firestore:', error);
+    }
+  }
+
+  async function clearResults() {
+    try {
+      const snapshot = await db.collection('results').get();
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    } catch (error) {
+      console.error('Ошибка очистки Firestore:', error);
+    }
+  }
+
+  // ---------- СОСТОЯНИЕ ----------
+  let currentUser = null;
+  let currentTest = null;
+  let currentTestStart = null;
+  let timerInterval = null;
+  let pendingTestId = null;
+
+  // ---------- ЭЛЕМЕНТЫ ----------
+  const loginScreen = document.getElementById('login-screen');
+  const studentPanel = document.getElementById('student-panel');
+  const teacherPanel = document.getElementById('teacher-panel');
+  const videoScreen = document.getElementById('video-screen');
+  const testScreen = document.getElementById('test-screen');
+  const resultScreen = document.getElementById('result-screen');
+
+  const roleStudentBtn = document.getElementById('role-student-btn');
+  const roleTeacherBtn = document.getElementById('role-teacher-btn');
+  const studentFields = document.getElementById('student-fields');
+  const teacherFields = document.getElementById('teacher-fields');
+  const studentNameInput = document.getElementById('student-name');
+  const studentGroupInput = document.getElementById('student-group');
+  const teacherPasswordInput = document.getElementById('teacher-password');
+  const loginBtn = document.getElementById('login-btn');
+
+  const studentNameDisplay = document.getElementById('student-name-display');
+  const studentGroupDisplay = document.getElementById('student-group-display');
+  const testsListDiv = document.getElementById('tests-list');
+  const studentLogout = document.getElementById('student-logout');
+  const studentHome = document.getElementById('student-home');
+
+  const videoTestTitle = document.getElementById('video-test-title');
+  const videoBack = document.getElementById('video-back');
+
+  const testTitle = document.getElementById('test-title');
+  const testForm = document.getElementById('test-form');
+  const timerEl = document.getElementById('timer');
+  const submitTest = document.getElementById('submit-test');
+  const cancelTest = document.getElementById('cancel-test');
+  const progressFill = document.getElementById('progress-fill');
+
+  const resultBack = document.getElementById('result-back');
+  const studentResultDetails = document.getElementById('student-result-details');
+  const resultVideoBtn = document.getElementById('result-video-btn');
+  const failMessage = document.getElementById('fail-message');
+
+  const teacherLogout = document.getElementById('teacher-logout');
+  const teacherHome = document.getElementById('teacher-home');
+  const resultsTbody = document.querySelector('#results-table tbody');
+  const teacherNotification = document.getElementById('teacher-notification');
+  const failCountSpan = document.getElementById('fail-count');
+  const clearStatsBtn = document.getElementById('clear-stats-btn');
+
+  // ---------- ВХОД ПО ENTER ----------
+  function setupEnterKey() {
+    studentNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+    studentGroupInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+    teacherPasswordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+  }
+  setupEnterKey();
+
+  // ---------- ГАЛЕРЕЯ В ПРАВОМ БЛОКЕ ----------
+  const galleryImg = document.getElementById('gallery-img');
+  const prevGallery = document.getElementById('prev-gallery');
+  const nextGallery = document.getElementById('next-gallery');
+  const galleryPhotos = [
+    'https://sun9-30.userapi.com/s/v1/ig2/BTQc5Igys2NOVYSeGMF2NFt2sprEId9P_zNAQ3X_iicdwJhjS-dAAF5tnNc84tnfN_JC3GqnZ-cLWQpueqUsmFXr.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
+    'https://sun9-87.userapi.com/s/v1/ig2/8tf5uOYzLft7OBPbRQ6iLk4YkngkjkqKCSg6GYwxYAiwRYCn7i2YXPYrHInpilutoFHKmyRi0UQi3zWh-GzeALGT.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
+    'https://sun9-25.userapi.com/s/v1/ig2/ykPScCGAvydtDfc8DGYPuCyLJXYoGqqhP_wtCM1LuD3pi0tNYGr5fRgynAXGyfcFSEaNJhxRY9luQECIxZJ20F58.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0'
+  ];
+  let currentGalleryIndex = 0;
+  galleryImg.src = galleryPhotos[currentGalleryIndex];
+
+  prevGallery.addEventListener('click', () => {
+    currentGalleryIndex = (currentGalleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+    galleryImg.src = galleryPhotos[currentGalleryIndex];
+  });
+  nextGallery.addEventListener('click', () => {
+    currentGalleryIndex = (currentGalleryIndex + 1) % galleryPhotos.length;
+    galleryImg.src = galleryPhotos[currentGalleryIndex];
+  });
+
+  // ---------- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ УВЕДОМЛЕНИЯ ----------
+  async function updateFailedNotification() {
+    const results = await loadResults();
+    const failed = results.filter(r => !r.passed).length;
+    if (failed > 0) {
+      teacherNotification.classList.remove('hidden');
+      failCountSpan.textContent = failed;
+    } else {
+      teacherNotification.classList.add('hidden');
+    }
+  }
+
+  // ---------- УПРАВЛЕНИЕ ЭКРАНАМИ ----------
+  function hideAll() {
+    [loginScreen, studentPanel, teacherPanel, videoScreen, testScreen, resultScreen].forEach(s => s.classList.add('hidden'));
+  }
+  function showLogin() { hideAll(); loginScreen.classList.remove('hidden'); }
+  function showStudentPanel() { hideAll(); studentPanel.classList.remove('hidden'); renderTestsList(); }
+  function showTeacherPanel() { hideAll(); teacherPanel.classList.remove('hidden'); renderResults(); updateFailedNotification(); }
+  
+  // Показ видео с проверкой доступа
+  async function showVideoScreen(id) {
+    if (currentUser && currentUser.role === 'student') {
+      const results = await loadResults();
+      const passed = results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === id && r.passed);
+      if (!passed) {
+        alert('Видео доступно только после успешного прохождения теста.');
+        return;
+      }
+    }
+    hideAll(); 
+    videoScreen.classList.remove('hidden');
+    const t = TESTS.find(t => t.id === id);
+    if (t) {
+      videoTestTitle.textContent = t.title;
+      pendingTestId = id;
+      const iframe = document.getElementById('rutube-iframe');
+      iframe.src = 'https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5';
+    }
+  }
+
+  function showTestScreen(test) { 
+    const iframe = document.getElementById('rutube-iframe');
+    iframe.src = '';
+    hideAll(); 
+    testScreen.classList.remove('hidden'); 
+    startTest(test); 
+  }
+  function showResultScreen(result) { 
+    hideAll(); 
+    resultScreen.classList.remove('hidden'); 
+    displayStudentResult(result); 
+    resultVideoBtn.onclick = () => showVideoScreen(result.testId);
+    if (!result.passed) {
+      failMessage.classList.remove('hidden');
+    } else {
+      failMessage.classList.add('hidden');
+    }
+  }
+
+  function goHome() {
+    clearInterval(timerInterval);
+    currentUser = null;
+    showLogin();
+  }
+
+  roleStudentBtn.onclick = () => {
+    roleStudentBtn.classList.add('active'); roleTeacherBtn.classList.remove('active');
+    studentFields.classList.remove('hidden'); teacherFields.classList.add('hidden');
+  };
+  roleTeacherBtn.onclick = () => {
+    roleTeacherBtn.classList.add('active'); roleStudentBtn.classList.remove('active');
+    teacherFields.classList.remove('hidden'); studentFields.classList.add('hidden');
+  };
+  loginBtn.onclick = () => {
+    if (roleStudentBtn.classList.contains('active')) {
+      const name = studentNameInput.value.trim();
+      const group = studentGroupInput.value.trim();
+      const words = name.split(/\s+/).filter(w => w.length > 0);
+      if (words.length < 2) {
+        alert('Пожалуйста, введите фамилию и имя (рекомендуется также отчество)');
+        return;
+      }
+      if (!group) {
+        alert('Введите группу');
+        return;
+      }
+      currentUser = { name, group, role: 'student' };
+      studentNameDisplay.textContent = name;
+      studentGroupDisplay.textContent = group;
+      showStudentPanel();
+    } else {
+      if (teacherPasswordInput.value.trim() !== TEACHER_PASSWORD) return alert('Неверный пароль');
+      currentUser = { role: 'teacher' };
+      showTeacherPanel();
+    }
+  };
+  studentLogout.onclick = goHome;
+  teacherLogout.onclick = goHome;
+  studentHome.onclick = goHome;
+  teacherHome.onclick = goHome;
+
+  async function renderTestsList() {
+    if (!currentUser || currentUser.role !== 'student') return;
+    const results = await loadResults();
+    const hasAttempt = tid => results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === tid);
+    const isPassed = tid => results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === tid && r.passed);
+    let html = '';
+    TESTS.forEach(test => {
+      const attempted = hasAttempt(test.id);
+      const passed = isPassed(test.id);
+      html += `
+        <div class="test-item">
+          <div class="test-info">
+            <strong>${test.title}</strong><br>
+            <span style="color:#2c5778;">⏱️ ${test.timeLimit/60} мин</span>
+            ${attempted ? '<br><span style="color:#b12;">⚠️ Тест уже пройден</span>' : ''}
+          </div>
+          <div class="test-actions">
+            <button class="start-test-btn" data-id="${test.id}" ${attempted ? 'disabled' : ''}>🚀 Начать тест</button>
+            <button class="watch-video-btn secondary-btn" data-id="${test.id}" ${!passed ? 'disabled' : ''}>📺 Смотреть видео</button>
+          </div>
+        </div>`;
+    });
+    testsListDiv.innerHTML = html;
+    document.querySelectorAll('.start-test-btn').forEach(b => b.onclick = () => {
+      const t = TESTS.find(t => t.id === +b.dataset.id);
+      if (t) showTestScreen(t);
+    });
+    document.querySelectorAll('.watch-video-btn').forEach(b => b.onclick = () => {
+      const tid = +b.dataset.id;
+      showVideoScreen(tid);
+    });
+  }
+
+  videoBack.onclick = () => { 
+    showStudentPanel(); 
+    pendingTestId = null; 
+    const iframe = document.getElementById('rutube-iframe');
+    iframe.src = '';
+  };
+
+  function startTest(test) {
+    clearInterval(timerInterval);
+    currentTest = JSON.parse(JSON.stringify(test));
+    currentTestStart = Date.now();
+    testTitle.textContent = currentTest.title;
+    renderQuestions(currentTest.questions);
+    progressFill.style.width = '100%';
+    timerInterval = setInterval(updateTimer, 1000);
+  }
+  function renderQuestions(qs) {
+    let html = '';
+    qs.forEach((q, i) => {
+      html += `<div class="question">`;
+      html += `<div class="question-text">${i+1}. ${q.text} <span class="hint">(выберите один ответ)</span></div>`;
+      html += `<div class="options">`;
+      q.options.forEach(opt => {
+        const name = `q_${q.id}`;
+        html += `<label><input type="radio" name="${name}" value="${opt.id}"> ${opt.text}</label>`;
+      });
+      html += `</div></div>`;
+    });
+    testForm.innerHTML = html;
+  }
+  function updateTimer() {
+    if (!currentTestStart) return;
+    const elapsed = Math.floor((Date.now() - currentTestStart) / 1000);
+    const rem = currentTest.timeLimit - elapsed;
+    const percent = Math.max(0, (rem / currentTest.timeLimit) * 100);
+    progressFill.style.width = percent + '%';
+    if (rem <= 0) { 
+      timerEl.textContent = '0:00'; 
+      progressFill.style.width = '0%';
+      finishTest(true); 
+    } else { 
+      const m = Math.floor(rem/60); 
+      const s = rem%60; 
+      timerEl.textContent = `${m}:${s<10?'0'+s:s}`; 
+    }
+  }
+  function finishTest(timeout) {
+    clearInterval(timerInterval);
+    if (!currentTest || !currentUser) return;
+
+    const formData = new FormData(testForm);
+    const questionIds = currentTest.questions.map(q => q.id);
+    const answeredQuestions = new Set();
+    for (let [name, val] of formData.entries()) {
+      const qid = parseInt(name.split('_')[1]);
+      answeredQuestions.add(qid);
+    }
+    const allAnswered = questionIds.every(id => answeredQuestions.has(id));
+    if (!allAnswered) {
+      alert('Пожалуйста, ответьте на все вопросы перед завершением теста.');
+      timerInterval = setInterval(updateTimer, 1000);
+      return;
+    }
+
+    const answers = {};
+    for (let [name,val] of formData) { let qid = +name.split('_')[1]; if (!answers[qid]) answers[qid]=[]; answers[qid].push(val); }
+    let score = 0, maxScore = 0;
+    const details = [];
+    currentTest.questions.forEach(q => {
+      maxScore += q.points;
+      const user = answers[q.id] || [];
+      const correct = q.options.filter(o => o.correct).map(o => o.id.toString());
+      let ok = false;
+      if (q.type === 'single') ok = (user.length === 1 && correct.includes(user[0]));
+      else ok = JSON.stringify([...user].sort()) === JSON.stringify([...correct].sort());
+      if (ok) score += q.points;
+      details.push({
+        questionText: q.text,
+        userAnswerIds: user,
+        correctAnswerIds: correct,
+        isCorrect: ok,
+        points: q.points,
+        options: q.options
+      });
+    });
+    const passed = score >= currentTest.passingScore;
+    const result = {
+      student: currentUser.name, group: currentUser.group,
+      testId: currentTest.id, testTitle: currentTest.title,
+      score, maxScore, passed, date: new Date().toLocaleString(), details
+    };
+    saveResult(result);
+    alert(timeout ? '⏰ Время вышло!' : '✅ Тест завершён');
+    showResultScreen(result);
+    currentTest = null;
+  }
+  submitTest.onclick = () => finishTest(false);
+  cancelTest.onclick = () => { if (confirm('Прервать тест?')) { clearInterval(timerInterval); showStudentPanel(); currentTest = null; } };
+
+  function displayStudentResult(r) {
+    let html = `<p><strong>Баллы:</strong> ${r.score} из ${r.maxScore} — ${r.passed ? '✅ Сдано' : '❌ Не сдано'}</p>`;
+    r.details.forEach((d,i) => {
+      const user = d.userAnswerIds.map(id => d.options.find(o => o.id==id)?.text || id).join(', ') || 'нет ответа';
+      const correct = d.correctAnswerIds.map(id => d.options.find(o => o.id==id)?.text).join(', ');
+      html += `<div style="margin:20px 0; padding:15px; background:#f4f9ff; border-radius:20px;">`;
+      html += `<strong>${i+1}. ${d.questionText}</strong><br>`;
+      html += `Ваш ответ: <span class="${d.isCorrect?'correct':'incorrect'}">${user}</span>`;
+      if (!d.isCorrect) html += `<br>Правильный: <span class="correct">${correct}</span>`;
+      html += '</div>';
+    });
+    studentResultDetails.innerHTML = html;
+  }
+  resultBack.onclick = showStudentPanel;
+
+  // Функция разрешения пересдачи (удаление результата)
+  async function allowRetake(student, group, testId) {
+    const results = await loadResults();
+    const toDelete = results.filter(r => r.student === student && r.group === group && r.testId === testId);
+    for (let r of toDelete) {
+      await deleteResult(r.id);
+    }
+    await renderResults();
+    await updateFailedNotification();
+    if (currentUser && currentUser.role === 'student' && currentUser.name === student && currentUser.group === group) {
+      await renderTestsList();
+    }
+    alert('Пересдача разрешена. Студент может пройти тест заново.');
+  }
+
+  async function renderResults() {
+    let results = await loadResults();
+    results.sort((a, b) => {
+      if (a.group < b.group) return -1;
+      if (a.group > b.group) return 1;
+      if (a.student < b.student) return -1;
+      if (a.student > b.student) return 1;
+      return 0;
+    });
+    let html = '';
+    results.forEach((r,i) => {
+      html += `<tr>`;
+      html += `<td>${r.student}</td>`;
+      html += `<td>${r.group}</td>`;
+      html += `<td>${r.testTitle}</td>`;
+      html += `<td>${r.score}/${r.maxScore}</td>`;
+      html += `<td><span class="badge ${r.passed?'pass':'fail'}">${r.passed?'Сдано':'Не сдано'}</span></td>`;
+      html += `<td>${r.date}</td>`;
+      html += `<td><button class="secondary-btn details-btn" data-index="${i}">📋 Ошибки</button></td>`;
+      if (!r.passed) {
+        html += `<td><button class="retake-btn" data-student="${r.student}" data-group="${r.group}" data-testid="${r.testId}" data-docid="${r.id}">🔄 Разрешить пересдачу</button></td>`;
+      } else {
+        html += `<td>—</td>`;
+      }
+      html += `</tr>`;
+      html += `<tr id="detail-${i}" class="hidden"><td colspan="8"><div class="detail-row" id="content-${i}"></div></td></tr>`;
+    });
+    if (!results.length) html = '<tr><td colspan="8" style="text-align:center; padding:40px;">Пока нет результатов</td></tr>';
+    resultsTbody.innerHTML = html;
+
+    document.querySelectorAll('.details-btn').forEach(btn => {
+      btn.onclick = () => {
+        const idx = btn.dataset.index;
+        const row = document.getElementById(`detail-${idx}`);
+        const content = document.getElementById(`content-${idx}`);
+        if (row.classList.contains('hidden')) {
+          const r = results[idx];
+          let det = '';
+          r.details.forEach((d,i) => {
+            const user = d.userAnswerIds.map(id => d.options.find(o=>o.id==id)?.text||id).join(', ')||'нет ответа';
+            const correct = d.correctAnswerIds.map(id=> d.options.find(o=>o.id==id)?.text).join(', ');
+            det += `<p><strong>${i+1}. ${d.questionText}</strong><br>Ответ: <span class="${d.isCorrect?'correct':'incorrect'}">${user}</span>`;
+            if (!d.isCorrect) det += `<br>Правильный: <span class="correct">${correct}</span>`;
+            det += '</p><hr>';
+          });
+          content.innerHTML = det;
+          row.classList.remove('hidden');
+          if (!r.passed) {
+            updateFailedNotification();
+          }
+        } else row.classList.add('hidden');
+      };
+    });
+
+    document.querySelectorAll('.retake-btn').forEach(btn => {
+      btn.onclick = () => {
+        const student = btn.dataset.student;
+        const group = btn.dataset.group;
+        const testId = parseInt(btn.dataset.testid);
+        if (confirm(`Разрешить пересдачу для ${student} (${group})?`)) {
+          allowRetake(student, group, testId);
+        }
+      };
+    });
+  }
+
+  clearStatsBtn.onclick = async () => {
+    if (confirm('Вы уверены, что хотите очистить всю статистику? Это действие необратимо.')) {
+      await clearResults();
+      await renderResults();
+      await updateFailedNotification();
+      alert('Статистика очищена.');
+    }
+  };
+  showLogin();
+</script>
+</body>
+</html>
