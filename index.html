@@ -227,7 +227,17 @@
             transform: scale(1.3);
             color: #3f8a7a;
         }
-
+<!-- Разделитель и блок видео-инструктажей -->
+<h3 style="margin-top: 30px;">Видео-инструктажи</h3>
+<div class="gallery-container" id="video-instructions-container">
+    <div style="position: relative; width: 100%;" id="instruction-video-wrapper">
+        <!-- Первое видео будет загружено сюда через JS -->
+    </div>
+    <div class="gallery-nav">
+        <button id="prev-instruction">←</button>
+        <button id="next-instruction">→</button>
+    </div>
+</div>
         /* Статический контент центральной колонки */
         .about-section, .publications-section {
             background: rgba(255,255,255,0.9);
@@ -800,18 +810,16 @@
         <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
         <button class="secondary-btn" id="video-back">← К списку</button>
     </div>
-    <div class="video-container">
-        <div class="video-title">Наложение гипсовой лангеты</div>
-        <div id="rutube-player-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:24px; margin-bottom:20px;">
-            <iframe id="rutube-iframe" 
-                    src="https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5" 
-                    style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" 
-                    allow="clipboard-write; autoplay" 
-                    webkitAllowFullScreen 
-                    mozallowfullscreen 
-                    allowFullScreen></iframe>
-        </div>
+<div class="video-container">
+    <div class="video-title">Наложение гипсовой лангеты</div>
+    <div style="position: relative; padding-top: 177.78%; width: 100%; border-radius: 24px; overflow: hidden; margin-bottom:20px;">
+        <iframe src="https://kinescope.io/embed/bXQAxfW51g4bdGq84rfhxA" 
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" 
+                frameborder="0" 
+                allowfullscreen 
+                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
     </div>
+</div>
 </div>
 
             <!-- Страница теста -->
@@ -1061,11 +1069,14 @@
   const galleryImg = document.getElementById('gallery-img');
   const prevGallery = document.getElementById('prev-gallery');
   const nextGallery = document.getElementById('next-gallery');
-  const galleryPhotos = [
+ const galleryPhotos = [
     'https://sun9-30.userapi.com/s/v1/ig2/BTQc5Igys2NOVYSeGMF2NFt2sprEId9P_zNAQ3X_iicdwJhjS-dAAF5tnNc84tnfN_JC3GqnZ-cLWQpueqUsmFXr.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
     'https://sun9-87.userapi.com/s/v1/ig2/8tf5uOYzLft7OBPbRQ6iLk4YkngkjkqKCSg6GYwxYAiwRYCn7i2YXPYrHInpilutoFHKmyRi0UQi3zWh-GzeALGT.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
-    'https://sun9-25.userapi.com/s/v1/ig2/ykPScCGAvydtDfc8DGYPuCyLJXYoGqqhP_wtCM1LuD3pi0tNYGr5fRgynAXGyfcFSEaNJhxRY9luQECIxZJ20F58.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0'
-  ];
+    'https://sun9-25.userapi.com/s/v1/ig2/ykPScCGAvydtDfc8DGYPuCyLJXYoGqqhP_wtCM1LuD3pi0tNYGr5fRgynAXGyfcFSEaNJhxRY9luQECIxZJ20F58.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
+    'https://sun9-68.userapi.com/s/v1/ig2/sHivZkmAocR3BkwsM1v2CFQ_3mr7KPIiJgOROiUt5wwF-BPpkrn56UaOvWQsd1wRxZ84UrmLDGHuWWG5fx7w_j0f.jpg?quality=95&as=32x21,48x32,72x48,108x72,160x107,240x160,360x240,480x320,540x360,640x427,720x480,1080x720,1280x853,1440x960,1620x1080&from=bu&cs=1620x0',
+    'https://sun9-25.userapi.com/s/v1/ig2/usTkJPMOZI-D-mnoqGEgWI3dumpuWcT5twv61s_fF6CgKiAh67_arscBdYGYVWmJPLZQ4Uh0sXUiy_A6mkgSSP43.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,960x1280&from=bu&cs=960x0',
+    'https://sun9-39.userapi.com/s/v1/ig2/r-ZMPSwpx1S0KqNZSlgYSIqia2Hk9BOylgTMpxw0fQ52kn50OVTqzx-z89gz3z3Wg_MPRVS_8EKIy9CkRUX4Y5tP.jpg?quality=95&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1920x2560&from=bu&cs=1920x0'
+];
   let currentGalleryIndex = 0;
   galleryImg.src = galleryPhotos[currentGalleryIndex];
 
@@ -1422,5 +1433,45 @@ async function showVideoScreen(id) {
   };
   showLogin();
 </script>
+    // ---------- ВИДЕО-ИНСТРУКТАЖИ В ПРАВОЙ КОЛОНКЕ ----------
+const instructionWrapper = document.getElementById('instruction-video-wrapper');
+const prevInstruction = document.getElementById('prev-instruction');
+const nextInstruction = document.getElementById('next-instruction');
+
+const instructionVideos = [
+    {
+        title: 'Техника безопасности',
+        embed: '<iframe src="https://kinescope.io/embed/3rEDYJWyLCCbsVeBT5G6YT" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
+    },
+    {
+        title: 'Правила работы с компьютером',
+        embed: '<iframe src="https://kinescope.io/embed/fx6zbmHSgzUzCBhDZciYxV" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
+    }
+];
+
+let currentInstructionIndex = 0;
+
+function loadInstructionVideo(index) {
+    const video = instructionVideos[index];
+    instructionWrapper.innerHTML = `
+        <div style="position: relative; padding-top: 100%; width: 100%; border-radius: 12px; overflow: hidden; background: #f0f0f0;">
+            ${video.embed}
+        </div>
+        <p style="text-align: center; margin-top: 8px; font-weight: 500; color: #333;">${video.title}</p>
+    `;
+}
+
+// Загружаем первое видео при старте
+loadInstructionVideo(currentInstructionIndex);
+
+prevInstruction.addEventListener('click', () => {
+    currentInstructionIndex = (currentInstructionIndex - 1 + instructionVideos.length) % instructionVideos.length;
+    loadInstructionVideo(currentInstructionIndex);
+});
+
+nextInstruction.addEventListener('click', () => {
+    currentInstructionIndex = (currentInstructionIndex + 1) % instructionVideos.length;
+    loadInstructionVideo(currentInstructionIndex);
+});
 </body>
 </html>
