@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модуль интерактивного обучения</title>
-    <!-- Подключаем Firebase SDK (compat‑версия, простая в использовании) -->
+    <!-- Подключаем Firebase SDK (compat‑версия) -->
     <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
     <style>
-        /* Все стили без изменений — они уже были в предыдущей версии */
         * { box-sizing: border-box; font-family: 'Helvetica', 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
         body {
             background: url('https://rezkalaser.ru/wp-content/uploads/2022/10/laser_1419851.jpgsize1280x855quality96typealbum') no-repeat center center fixed;
@@ -167,7 +166,7 @@
             background: transparent;
         }
 
-        /* Правая боковая панель (галерея) */
+        /* Правая боковая панель (галерея + видео-инструктажи) */
         .right-sidebar {
             flex: 1;
             background: rgba(255,255,255,0.8);
@@ -192,6 +191,7 @@
         .gallery-container {
             position: relative;
             width: 100%;
+            margin-bottom: 20px;
         }
         .gallery-image {
             width: 100%;
@@ -227,17 +227,7 @@
             transform: scale(1.3);
             color: #3f8a7a;
         }
-<!-- Разделитель и блок видео-инструктажей -->
-<h3 style="margin-top: 30px;">Видео-инструктажи</h3>
-<div class="gallery-container" id="video-instructions-container">
-    <div style="position: relative; width: 100%;" id="instruction-video-wrapper">
-        <!-- Первое видео будет загружено сюда через JS -->
-    </div>
-    <div class="gallery-nav">
-        <button id="prev-instruction">←</button>
-        <button id="next-instruction">→</button>
-    </div>
-</div>
+
         /* Статический контент центральной колонки */
         .about-section, .publications-section {
             background: rgba(255,255,255,0.9);
@@ -804,23 +794,23 @@
                 <div id="tests-list"></div>
             </div>
 
-           <!-- Страница видео с Rutube (доступна только после прохождения теста) -->
-<div id="video-screen" class="hidden">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
-        <button class="secondary-btn" id="video-back">← К списку</button>
-    </div>
-<div class="video-container">
-    <div class="video-title">Наложение гипсовой лангеты</div>
-    <div style="position: relative; padding-top: 177.78%; width: 100%; border-radius: 24px; overflow: hidden; margin-bottom:20px;">
-        <iframe src="https://kinescope.io/embed/bXQAxfW51g4bdGq84rfhxA" 
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" 
-                frameborder="0" 
-                allowfullscreen 
-                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
-    </div>
-</div>
-</div>
+            <!-- Страница видео с Kinescope (доступна только после прохождения теста) -->
+            <div id="video-screen" class="hidden">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
+                    <button class="secondary-btn" id="video-back">← К списку</button>
+                </div>
+                <div class="video-container">
+                    <div class="video-title">Наложение гипсовой лангеты</div>
+                    <div style="position: relative; padding-top: 177.78%; width: 100%; border-radius: 24px; overflow: hidden; margin-bottom:20px;">
+                        <iframe src="https://kinescope.io/embed/bXQAxfW51g4bdGq84rfhxA" 
+                                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" 
+                                frameborder="0" 
+                                allowfullscreen 
+                                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
+                    </div>
+                </div>
+            </div>
 
             <!-- Страница теста -->
             <div id="test-screen" class="hidden">
@@ -888,7 +878,7 @@
             </div>
         </div>
 
-        <!-- Правая колонка: галерея со стрелками -->
+        <!-- Правая колонка: фотогалерея + видео-инструктажи -->
         <div class="right-sidebar">
             <h3>Фотогалерея</h3>
             <div class="gallery-container">
@@ -898,12 +888,24 @@
                     <button id="next-gallery">→</button>
                 </div>
             </div>
+
+            <!-- Новый блок: видео-инструктажи -->
+            <h3 style="margin-top: 30px;">Видео-инструктажи</h3>
+            <div class="gallery-container" id="video-instructions-container">
+                <div style="position: relative; width: 100%;" id="instruction-video-wrapper">
+                    <!-- Видео будет загружено через JS -->
+                </div>
+                <div class="gallery-nav">
+                    <button id="prev-instruction">←</button>
+                    <button id="next-instruction">→</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-  // 🔥 ВАШИ ДАННЫЕ ИЗ FIREBASE (уже вставлены)
+  // 🔥 ВАШИ ДАННЫЕ ИЗ FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyCBAuatl6hNckHnJUHabty4vWAIy6TUCCs",
     authDomain: "mewudev.firebaseapp.com",
@@ -913,7 +915,7 @@
     appId: "1:942745098749:web:b4615389bab6150227a194"
   };
 
-  // Инициализация Firebase (используем compat‑версию)
+  // Инициализация Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
@@ -957,7 +959,7 @@
     ]
   }];
 
-  // ---------- РАБОТА С FIREBASE (вместо localStorage) ----------
+  // ---------- РАБОТА С FIREBASE ----------
   async function loadResults() {
     try {
       const snapshot = await db.collection('results').get();
@@ -970,7 +972,6 @@
 
   async function saveResult(result) {
     try {
-      // Добавляем временную метку для сортировки (можно использовать серверное время)
       await db.collection('results').add({
         ...result,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1069,14 +1070,14 @@
   const galleryImg = document.getElementById('gallery-img');
   const prevGallery = document.getElementById('prev-gallery');
   const nextGallery = document.getElementById('next-gallery');
- const galleryPhotos = [
+  const galleryPhotos = [
     'https://sun9-30.userapi.com/s/v1/ig2/BTQc5Igys2NOVYSeGMF2NFt2sprEId9P_zNAQ3X_iicdwJhjS-dAAF5tnNc84tnfN_JC3GqnZ-cLWQpueqUsmFXr.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
     'https://sun9-87.userapi.com/s/v1/ig2/8tf5uOYzLft7OBPbRQ6iLk4YkngkjkqKCSg6GYwxYAiwRYCn7i2YXPYrHInpilutoFHKmyRi0UQi3zWh-GzeALGT.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
     'https://sun9-25.userapi.com/s/v1/ig2/ykPScCGAvydtDfc8DGYPuCyLJXYoGqqhP_wtCM1LuD3pi0tNYGr5fRgynAXGyfcFSEaNJhxRY9luQECIxZJ20F58.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1620x2160&from=bu&cs=1620x0',
     'https://sun9-68.userapi.com/s/v1/ig2/sHivZkmAocR3BkwsM1v2CFQ_3mr7KPIiJgOROiUt5wwF-BPpkrn56UaOvWQsd1wRxZ84UrmLDGHuWWG5fx7w_j0f.jpg?quality=95&as=32x21,48x32,72x48,108x72,160x107,240x160,360x240,480x320,540x360,640x427,720x480,1080x720,1280x853,1440x960,1620x1080&from=bu&cs=1620x0',
     'https://sun9-25.userapi.com/s/v1/ig2/usTkJPMOZI-D-mnoqGEgWI3dumpuWcT5twv61s_fF6CgKiAh67_arscBdYGYVWmJPLZQ4Uh0sXUiy_A6mkgSSP43.jpg?quality=96&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,960x1280&from=bu&cs=960x0',
     'https://sun9-39.userapi.com/s/v1/ig2/r-ZMPSwpx1S0KqNZSlgYSIqia2Hk9BOylgTMpxw0fQ52kn50OVTqzx-z89gz3z3Wg_MPRVS_8EKIy9CkRUX4Y5tP.jpg?quality=95&as=32x43,48x64,72x96,108x144,160x213,240x320,360x480,480x640,540x720,640x853,720x960,1080x1440,1280x1707,1440x1920,1920x2560&from=bu&cs=1920x0'
-];
+  ];
   let currentGalleryIndex = 0;
   galleryImg.src = galleryPhotos[currentGalleryIndex];
 
@@ -1088,6 +1089,47 @@
     currentGalleryIndex = (currentGalleryIndex + 1) % galleryPhotos.length;
     galleryImg.src = galleryPhotos[currentGalleryIndex];
   });
+
+  // ---------- ВИДЕО-ИНСТРУКТАЖИ ----------
+  const instructionWrapper = document.getElementById('instruction-video-wrapper');
+  const prevInstruction = document.getElementById('prev-instruction');
+  const nextInstruction = document.getElementById('next-instruction');
+
+  const instructionVideos = [
+    {
+      title: 'Техника безопасности',
+      embed: '<iframe src="https://kinescope.io/embed/3rEDYJWyLCCbsVeBT5G6YT" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
+    },
+    {
+      title: 'Правила работы с компьютером',
+      embed: '<iframe src="https://kinescope.io/embed/fx6zbmHSgzUzCBhDZciYxV" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
+    }
+  ];
+
+  let currentInstructionIndex = 0;
+
+  function loadInstructionVideo(index) {
+    const video = instructionVideos[index];
+    instructionWrapper.innerHTML = `
+      <div style="position: relative; padding-top: 100%; width: 100%; border-radius: 12px; overflow: hidden; background: #f0f0f0;">
+        ${video.embed}
+      </div>
+      <p style="text-align: center; margin-top: 8px; font-weight: 500; color: #333;">${video.title}</p>
+    `;
+  }
+
+  loadInstructionVideo(currentInstructionIndex);
+
+  if (prevInstruction && nextInstruction) {
+    prevInstruction.addEventListener('click', () => {
+      currentInstructionIndex = (currentInstructionIndex - 1 + instructionVideos.length) % instructionVideos.length;
+      loadInstructionVideo(currentInstructionIndex);
+    });
+    nextInstruction.addEventListener('click', () => {
+      currentInstructionIndex = (currentInstructionIndex + 1) % instructionVideos.length;
+      loadInstructionVideo(currentInstructionIndex);
+    });
+  }
 
   // ---------- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ УВЕДОМЛЕНИЯ ----------
   async function updateFailedNotification() {
@@ -1109,34 +1151,25 @@
   function showStudentPanel() { hideAll(); studentPanel.classList.remove('hidden'); renderTestsList(); }
   function showTeacherPanel() { hideAll(); teacherPanel.classList.remove('hidden'); renderResults(); updateFailedNotification(); }
   
-  // Показ видео с проверкой доступа
-async function showVideoScreen(id) {
+  async function showVideoScreen(id) {
     if (currentUser && currentUser.role === 'student') {
-        const results = await loadResults();
-        const passed = results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === id && r.passed);
-        if (!passed) {
-            alert('Видео доступно только после успешного прохождения теста.');
-            return;
-        }
+      const results = await loadResults();
+      const passed = results.some(r => r.student === currentUser.name && r.group === currentUser.group && r.testId === id && r.passed);
+      if (!passed) {
+        alert('Видео доступно только после успешного прохождения теста.');
+        return;
+      }
     }
     hideAll(); 
     videoScreen.classList.remove('hidden');
     const t = TESTS.find(t => t.id === id);
     if (t) {
-        videoTestTitle.textContent = t.title;
-        pendingTestId = id;
-        const iframe = document.getElementById('rutube-iframe');
-        // Принудительно перезагружаем плеер с параметром, чтобы избежать бесконечной загрузки
-        iframe.src = '';
-        setTimeout(() => {
-            iframe.src = 'https://rutube.ru/play/embed/79a582fe15346bfa69dec0dd323687f5?skinColor=00cbff';
-        }, 100);
+      videoTestTitle.textContent = t.title;
+      pendingTestId = id;
     }
-}
+  }
 
   function showTestScreen(test) { 
-    const iframe = document.getElementById('rutube-iframe');
-    iframe.src = '';
     hideAll(); 
     testScreen.classList.remove('hidden'); 
     startTest(test); 
@@ -1231,8 +1264,6 @@ async function showVideoScreen(id) {
   videoBack.onclick = () => { 
     showStudentPanel(); 
     pendingTestId = null; 
-    const iframe = document.getElementById('rutube-iframe');
-    iframe.src = '';
   };
 
   function startTest(test) {
@@ -1342,7 +1373,6 @@ async function showVideoScreen(id) {
   }
   resultBack.onclick = showStudentPanel;
 
-  // Функция разрешения пересдачи (удаление результата)
   async function allowRetake(student, group, testId) {
     const results = await loadResults();
     const toDelete = results.filter(r => r.student === student && r.group === group && r.testId === testId);
@@ -1377,7 +1407,7 @@ async function showVideoScreen(id) {
       html += `<td>${r.date}</td>`;
       html += `<td><button class="secondary-btn details-btn" data-index="${i}">📋 Ошибки</button></td>`;
       if (!r.passed) {
-        html += `<td><button class="retake-btn" data-student="${r.student}" data-group="${r.group}" data-testid="${r.testId}" data-docid="${r.id}">🔄 Разрешить пересдачу</button></td>`;
+        html += `<td><button class="retake-btn" data-student="${r.student}" data-group="${r.group}" data-testid="${r.testId}">🔄 Разрешить пересдачу</button></td>`;
       } else {
         html += `<td>—</td>`;
       }
@@ -1433,45 +1463,5 @@ async function showVideoScreen(id) {
   };
   showLogin();
 </script>
-    // ---------- ВИДЕО-ИНСТРУКТАЖИ В ПРАВОЙ КОЛОНКЕ ----------
-const instructionWrapper = document.getElementById('instruction-video-wrapper');
-const prevInstruction = document.getElementById('prev-instruction');
-const nextInstruction = document.getElementById('next-instruction');
-
-const instructionVideos = [
-    {
-        title: 'Техника безопасности',
-        embed: '<iframe src="https://kinescope.io/embed/3rEDYJWyLCCbsVeBT5G6YT" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
-    },
-    {
-        title: 'Правила работы с компьютером',
-        embed: '<iframe src="https://kinescope.io/embed/fx6zbmHSgzUzCBhDZciYxV" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" frameborder="0" allowfullscreen style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>'
-    }
-];
-
-let currentInstructionIndex = 0;
-
-function loadInstructionVideo(index) {
-    const video = instructionVideos[index];
-    instructionWrapper.innerHTML = `
-        <div style="position: relative; padding-top: 100%; width: 100%; border-radius: 12px; overflow: hidden; background: #f0f0f0;">
-            ${video.embed}
-        </div>
-        <p style="text-align: center; margin-top: 8px; font-weight: 500; color: #333;">${video.title}</p>
-    `;
-}
-
-// Загружаем первое видео при старте
-loadInstructionVideo(currentInstructionIndex);
-
-prevInstruction.addEventListener('click', () => {
-    currentInstructionIndex = (currentInstructionIndex - 1 + instructionVideos.length) % instructionVideos.length;
-    loadInstructionVideo(currentInstructionIndex);
-});
-
-nextInstruction.addEventListener('click', () => {
-    currentInstructionIndex = (currentInstructionIndex + 1) % instructionVideos.length;
-    loadInstructionVideo(currentInstructionIndex);
-});
 </body>
 </html>
