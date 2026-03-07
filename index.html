@@ -794,23 +794,27 @@
                 <div id="tests-list"></div>
             </div>
 
-            <!-- Страница видео с Kinescope (доступна только после прохождения теста) -->
-            <div id="video-screen" class="hidden">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                    <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
-                    <button class="secondary-btn" id="video-back">← К списку</button>
-                </div>
-                <div class="video-container">
-                    <div class="video-title">Наложение гипсовой лангеты</div>
-                    <div style="position: relative; padding-top: 177.78%; width: 100%; border-radius: 24px; overflow: hidden; margin-bottom:20px;">
-                        <iframe src="https://kinescope.io/embed/bXQAxfW51g4bdGq84rfhxA" 
-                                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" 
-                                frameborder="0" 
-                                allowfullscreen 
-                                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
-                    </div>
-                </div>
+           <!-- Страница видео с Kinescope (компактный размер) -->
+<div id="video-screen" class="hidden">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <h2><span class="section-icon">🎬</span> Домашнее задание</h2>
+        <button class="secondary-btn" id="video-back">← К списку</button>
+    </div>
+    <div class="video-container">
+        <div class="video-title">Наложение гипсовой лангеты</div>
+        <!-- Добавляем обёртку для ограничения ширины и центрирования -->
+        <div style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
+            <div style="position: relative; padding-top: 177.78%; width: 100%; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                <iframe src="https://kinescope.io/embed/bXQAxfW51g4bdGq84rfhxA" 
+                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" 
+                        frameborder="0" 
+                        allowfullscreen 
+                        style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
             </div>
+        </div>
+        <!-- Если нужна подпись или дополнительный текст, можно добавить здесь -->
+    </div>
+</div>
 
             <!-- Страница теста -->
             <div id="test-screen" class="hidden">
